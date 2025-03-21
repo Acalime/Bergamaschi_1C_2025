@@ -89,22 +89,25 @@ case OFF:
 	break;
 case TOGGLE:
 	{
-	switch (estructura->n_led)
+	for(int i = 0; i<(2*estructura->n_ciclos); i++){
+		switch (estructura->n_led)
 		{
-		case 1:
-			LedToggle(LED_1);
-			break;
-		case 2:
-			LedToggle(LED_2);
-			break;
-		case 3:
-			LedToggle(LED_3);
-			break;
-		
-		default:
-			break;
+			case 1:
+				LedToggle(LED_1);
+				break;
+			case 2:
+				LedToggle(LED_2);
+				break;
+			case 3:
+				LedToggle(LED_3);
+				break;
+			
+			default:
+				break;
 		}
-		break;
+		vTaskDelay(estructura->periodo / portTICK_PERIOD_MS);
+		}
+	
 }
 	break;
 
@@ -117,26 +120,25 @@ default:
 void app_main(void){
 
 LedsInit(); 
+
 struct leds ledsito; 
-ledsito.mode = ON; 
+ledsito.mode = OFF; 
 ledsito.n_led = 3; 
 ledsito.n_ciclos = 10; 
-ledsito.periodo = 100; 
+ledsito.periodo = 1000; 
 funcion(&ledsito);
 
 struct leds ledsito1; 
-ledsito1.mode = ON; 
-ledsito1.n_led = 1; 
-ledsito1.n_ciclos = 10; 
-ledsito1.periodo = 100; 
+ledsito1.mode = OFF; 
+ledsito1.n_led = 1;  
 funcion(&ledsito1);
 
 struct leds ledsito2; 
-ledsito2.mode = ON; 
-ledsito2.n_led = 1; 
+ledsito2.mode = TOGGLE; 
+ledsito2.n_led = 2; 
 ledsito2.n_ciclos = 10; 
-ledsito.periodo = 100; 
-funcion(&ledsito1);
+ledsito2.periodo = 500;
+funcion(&ledsito2);
 
 
 }
