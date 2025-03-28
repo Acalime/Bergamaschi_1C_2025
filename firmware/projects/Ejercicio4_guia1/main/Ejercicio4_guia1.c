@@ -55,8 +55,8 @@ int8_t  convertToBcdArray (uint32_t data, uint8_t digits, uint8_t * bcd_number)
 /*==================[external functions definition]==========================*/
 void app_main(void){
 	
-	uint32_t dato = 428;
-	uint8_t digitos = 3; 
+	uint32_t dato = 42856;
+	uint8_t digitos = 5; 
 	uint8_t arregloBCD[digitos];
 
 	uint8_t devuelve = convertToBcdArray(dato, digitos, &arregloBCD);
