@@ -39,16 +39,14 @@ void app_main(void){
     	switch(teclas){
     		case SWITCH_1:
     			LedToggle(LED_1);
-				vTaskDelay(CONFIG_BLINK_PERIOD / portTICK_PERIOD_MS);
     		break;
     		case SWITCH_2:
     			LedToggle(LED_2);
-				vTaskDelay(CONFIG_BLINK_PERIOD / portTICK_PERIOD_MS);
     		break;
-			case SWITCH_1 / SWITCH_1:
+			case SWITCH_1 | SWITCH_2:
     			LedToggle(LED_3);
-				vTaskDelay(CONFIG_BLINK_PERIOD / portTICK_PERIOD_MS);
     		break;
     	}
+		vTaskDelay(CONFIG_BLINK_PERIOD / portTICK_PERIOD_MS);
 	}
 }
