@@ -43,9 +43,9 @@ typedef struct
 /*==================[internal functions declaration]=========================*/
 int8_t  convertToBcdArray (uint32_t data, uint8_t digits, uint8_t * bcd_number)
 {
-	int unidad, decena, centena; 
+	/*int unidad, decena, centena; 
 
-	/*unidad = data % 10; //428/10 = 42 => 428%10 = 8
+	unidad = data % 10; //428/10 = 42 => 428%10 = 8
 	decena = (data/10)%10; // 428/10 = 42 => 42%10 = 2
 	centena = (data/100)%10; //428/100=4 => 4%10 = 4
 
@@ -76,8 +76,23 @@ int8_t cambiarEstado(uint8_t digitoBCD, gpioConf_t * vectorGPIO){ //1 digito 4 b
 
 return 0; 
 
-
 }
+
+int8_t mostrarEnDisplay(uint32_t dato, gpioConf_t * vectorGPIO, gpioConf_t * vectorPosicion, uint8_t digitos){ 
+	
+	uint8_t arregloBCD[digitos];
+	convertToBcdArray(dato, digitos, &arregloBCD);
+
+	for(int i = 0; i < 3; i++)
+	{
+		cambiarEstado(arregloBCD[i], vectorGPIO);
+		GPIOOn(vectorPosicion[i].pin); 
+		GPIOOff(vectorPosicion[i].pin);
+	}
+
+	return 0; 
+} 
+
 /*==================[external functions definition]==========================*/
 void app_main(void){
 	
@@ -104,7 +119,20 @@ void app_main(void){
 	GPIOInit(vectorGPIO[3].pin, vectorGPIO[3].dir);
 
 	uint8_t digito = 9; 
-	int8_t devuelve = cambiarEstado(digito, &vectorGPIO); 
+	cambiarEstado(digito, vectorGPIO); 
+
+
+	gpioConf_t vectorPos[3] = {
+		{GPIO_9, GPIO_OUTPUT},
+		{GPIO_18, GPIO_OUTPUT},
+		{GPIO_19, GPIO_OUTPUT}
+	};
+
+	GPIOInit(vectorPos[0].pin, vectorPos[0].dir);
+	GPIOInit(vectorPos[1].pin, vectorPos[1].dir);
+	GPIOInit(vectorPos[2].pin, vectorPos[2].dir);
+
+	mostrarEnDisplay(156, vectorGPIO, vectorPos, 3); 
 
 
 }
