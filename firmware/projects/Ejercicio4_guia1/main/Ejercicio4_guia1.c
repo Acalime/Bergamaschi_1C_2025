@@ -26,7 +26,21 @@
 /*==================[inclusions]=============================================*/
 #include <stdio.h>
 #include <stdint.h>
+#include "gpio_mcu.h"
 /*==================[macros and definitions]=================================*/
+
+
+typedef struct
+{
+	gpio_t pin;			/*!< GPIO pin number */
+	io_t dir;			/*!< GPIO direction '0' IN;  '1' OUT*/
+} gpioConf_t;
+
+
+
+/*==================[internal data definition]===============================*/
+
+/*==================[internal functions declaration]=========================*/
 int8_t  convertToBcdArray (uint32_t data, uint8_t digits, uint8_t * bcd_number)
 {
 	int unidad, decena, centena; 
@@ -48,10 +62,22 @@ int8_t  convertToBcdArray (uint32_t data, uint8_t digits, uint8_t * bcd_number)
 	return 0; 
 }
 
-/*==================[internal data definition]===============================*/
+int8_t cambiarEstado(uint8_t digitoBCD, gpioConf_t * vectorGPIO){ //1 digito 4 bits
 
-/*==================[internal functions declaration]=========================*/
+	// 9 = 1001
+	//     1000 
+	for(int i = 0; i<4; i++)
+	{
+		if(digitoBCD & 1<<i)
+		{
+			GPIOOn(vectorGPIO[i].pin);
+		}else GPIOOff(vectorGPIO[i].pin);  
+	}
 
+return 0; 
+
+
+}
 /*==================[external functions definition]==========================*/
 void app_main(void){
 	
@@ -64,6 +90,22 @@ void app_main(void){
 	for(int i = digitos-1; i > -1; i--){
 		printf("%d", arregloBCD[i]);
 	}
+
+	gpioConf_t vectorGPIO[4] = {
+		{GPIO_20, GPIO_OUTPUT},
+		{GPIO_21, GPIO_OUTPUT},
+		{GPIO_22, GPIO_OUTPUT},
+		{GPIO_23, GPIO_OUTPUT}
+	};
+
+	GPIOInit(vectorGPIO[0].pin, vectorGPIO[0].dir);
+	GPIOInit(vectorGPIO[1].pin, vectorGPIO[1].dir);
+	GPIOInit(vectorGPIO[2].pin, vectorGPIO[2].dir);
+	GPIOInit(vectorGPIO[3].pin, vectorGPIO[3].dir);
+
+	uint8_t digito = 9; 
+	int8_t devuelve = cambiarEstado(digito, &vectorGPIO); 
+
 
 }
 /*==================[end of file]============================================*/
