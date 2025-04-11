@@ -4,22 +4,45 @@
  *
  * This section describes how the program works.
  *
- * <a href="https://drive.google.com/...">Operation Example</a>
+ * El programa toma un nùmero que se ingresa como hard code lo convierte a BCD y lo muestra por un display. 
  *
  * @section hardConn Hardware Connection
  *
  * |    Peripheral  |   ESP32   	|
  * |:--------------:|:--------------|
- * | 	PIN_X	 	| 	GPIO_X		|
+ * | 		D1     	| 	GPIO_20		|
+ * |:--------------:|:--------------|
+ * | 		D2	 	| 	GPIO_21		|
+ * |:--------------:|:--------------|
+ * | 		D3	 	| 	GPIO_22		|
+ * |:--------------:|:--------------|
+ * | 		D4	 	| 	GPIO_23		|
+ * |:--------------:|:--------------|
+ * | 	SEL_1	 	| 	GPIO_19		|
+ * |:--------------:|:--------------|
+ * | 	SEL_2	 	| 	GPIO_18		|
+ * |:--------------:|:--------------|
+ * | 	SEL_3	 	| 	GPIO_9		|
+ * |:--------------:|:--------------|
+ * | 	+5V		 	| 	+5V			|
+ * |:--------------:|:--------------|
+ * | 	GND		 	| 	GND			|
+ * |:--------------:|:--------------|
  *
  *
  * @section changelog Changelog
  *
  * |   Date	    | Description                                    |
  * |:----------:|:-----------------------------------------------|
- * | 12/09/2023 | Document creation		                         |
+ * | 28/03/2025 | Document creation		                         |
+ * |:----------:|:-----------------------------------------------|
+ * | 28/03/2025 | Creaciòn de la funciòn cambiar estado		     |
+ * |:----------:|:-----------------------------------------------|
+ * | 28/03/2025 | creaciòn de la funciòn mostrar en display	     |
+ * |:----------:|:-----------------------------------------------|
+ * | 11/04/2025 | Documentaciòn del còdigo              	     |
  *
- * @author Albano Peñalva (albano.penalva@uner.edu.ar)
+ * @author Micaela Bergamaschi (micela.bergamaschi@ingenieria.uner.edu.ar)
  *
  */
 
@@ -41,6 +64,10 @@ typedef struct
 /*==================[internal data definition]===============================*/
 
 /*==================[internal functions declaration]=========================*/
+
+/**
+* @brief convertToBcdArray: toma un nùmero y lo convierte a BCD
+*/
 int8_t  convertToBcdArray (uint32_t data, uint8_t digits, uint8_t * bcd_number)
 {
 	/*int unidad, decena, centena; 
@@ -62,6 +89,9 @@ int8_t  convertToBcdArray (uint32_t data, uint8_t digits, uint8_t * bcd_number)
 	return 0; 
 }
 
+/**
+* @brief cambiarEstado: lee el estado de un LED y lo invierte
+*/
 int8_t cambiarEstado(uint8_t digitoBCD, gpioConf_t * vectorGPIO){ //1 digito 4 bits
 
 	// 9 = 1001
@@ -78,6 +108,10 @@ return 0;
 
 }
 
+/**
+* 
+* @brief mostrarEnDisplay: toma un nùmero, lo convierte a BCD, y lo muestra en el display
+*/
 int8_t mostrarEnDisplay(uint32_t dato, gpioConf_t * vectorGPIO, gpioConf_t * vectorPosicion, uint8_t digitos){ 
 	
 	uint8_t arregloBCD[digitos];
