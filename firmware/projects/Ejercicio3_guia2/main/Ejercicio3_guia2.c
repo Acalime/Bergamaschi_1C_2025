@@ -165,7 +165,9 @@ void UartTask(void* param) {
 	while (true)
 	{
 		ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
-		UartSendString(UART_PC, "Medición\n"); 
+		UartSendString(UART_PC, (char*)UartItoa(medicion, 10)); 
+		UartSendString(UART_PC, " cm\n"); 
+
 	}
 	
 }
