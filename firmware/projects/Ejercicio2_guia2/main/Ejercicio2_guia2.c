@@ -18,13 +18,27 @@
  * | 	+5V		 	| 	+5V			|
  * |:--------------:|:--------------|
  * | 	GND		 	| 	GND			|
- *
+ * |:--------------:|:--------------|
+ * |   Display      |   EDU-CIAA	|
+ * |:--------------:|:-------------:|
+ * | 	Vcc 	    |	5V      	|
+ * | 	BCD1		| 	GPIO_20		|
+ * | 	BCD2	 	| 	GPIO_21		|
+ * | 	BCD3	 	| 	GPIO_22		|
+ * | 	BCD4	 	| 	GPIO_23		|
+ * | 	SEL1	 	| 	GPIO_19		|
+ * | 	SEL2	 	| 	GPIO_18		|
+ * | 	SEL3	 	| 	GPIO_9		|
+ * | 	Gnd 	    | 	GND     	|
  *
  * @section changelog Changelog
  *
  * |   Date	    | Description                                    |
  * |:----------:|:-----------------------------------------------|
- * | 11/04/2025 | Document creation		                         |
+ * | 25/04/2025 | Document creation.	                         |
+ * | 25/04/2025 | Se modifica el ejercicio 1 para usar interrupciones                         |
+ * | 09/05/2025 | Se agregan los timers                          |
+ *
  *
  * @author Micaela Bergamaschi (micaela.bergamaschi@ingenieria.uner.edu.ar)
  *
@@ -53,16 +67,19 @@ uint16_t medicion;
 #define ON 0
 #define OFF 1
 
-#define DELAY_TAREA 1000
+#define DELAY_TAREA 1000000 //el timer necesita microsegundos
 /*==================[internal data definition]===============================*/
-
+void FuncTimerTareas(void* param){
+	vTaskNotifyGiveFromISR(medir_task_handle, pdFALSE); 
+	vTaskNotifyGiveFromISR(mostrar_task_handle, pdFALSE); 
+}
 /*==================[internal functions declaration]=========================*/
 
 static void TareaMedir(void *pvParameter)
 {
 	while (true)
 	{
-		
+		ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
 		if (conmutarMedicion)
 		{
 			medicion = HcSr04ReadDistanceInCentimeters();
@@ -103,7 +120,6 @@ static void TareaMedir(void *pvParameter)
 			LedOff(LED_3);
 		}
 
-		vTaskDelay(DELAY_TAREA / portTICK_PERIOD_MS);
 	}
 }
 
@@ -120,14 +136,14 @@ static void TareaMostrar(void *pvParameter)
 {
 	while (true)
 	{
+		ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
 		if(handle)
 		{
 			LcdItsE0803Write(medicionGuardada);
 		}else if(!handle){
 			LcdItsE0803Write(medicion);
 		}
-		
-		vTaskDelay(DELAY_TAREA / portTICK_PERIOD_MS);	
+
 	}
 	
 }
@@ -143,8 +159,17 @@ void app_main(void)
 	SwitchActivInt(SWITCH_2, GuardarMedicion, NULL); 
 	LcdItsE0803Init(); 
 
-
+timer_config_t timer_Tareas = {
+        .timer = TIMER_A,
+        .period = DELAY_TAREA,
+        .func_p = FuncTimerTareas,
+        .param_p = NULL
+    };
+    TimerInit(&timer_Tareas);
+    
 	xTaskCreate(&TareaMedir, "Medir", 512, NULL, 5, &medir_task_handle);
 	xTaskCreate(&TareaMostrar, "Mostrar", 512, NULL, 5, &mostrar_task_handle);
+
+	TimerStart(timer_Tareas.timer); 
 }
 /*==================[end of file]============================================*/
