@@ -3,7 +3,9 @@
  * @section genDesc General Description
  *
  * Utiliza un sensor ultrasònico para medir la distancia a la que se encuentra un objeto.
- * Muestra la distancia medida en cm por un display.
+ * Muestra la distancia medida en cm por un display. Además, se pueden usar las teclas de 
+ * la placa, o las teclas "o" para empezar y detener la medición, y la tecla "H" para mantener el 
+ * valor en el display. 
  *
  * <a href="https://drive.google.com/...">Operation Example</a>
  *
@@ -56,6 +58,7 @@
 #include "switch.h"
 #include "lcditse0803.h"
 #include "uart_mcu.h"
+#include "ctype.h"
 /*==================[macros and definitions]=================================*/
 TaskHandle_t medir_task_handle = NULL;
 TaskHandle_t mostrar_task_handle = NULL;
@@ -87,7 +90,7 @@ void FuncTimerTareas(void* param){
 
 /*==================[internal functions declaration]=========================*/
 
-static void TareaMedir(void *pvParameter)
+static void TareaMedir(void *pvParameter) //tarea que se encarga de medir
 {
 	while (true)
 	{
@@ -135,13 +138,30 @@ static void TareaMedir(void *pvParameter)
 	}
 }
 
-void CambiarEstado(){
+void CambiarEstado(){ //función que se encarga de empezar o detener la medición 
 	conmutarMedicion = !conmutarMedicion;
 }
 
-void GuardarMedicion(){
+void GuardarMedicion(){ //función que se encarga de guardar la medición tomada 
 	handle = !handle; 
 	medicionGuardada = medicion; 
+}
+
+void LeerTeclado(){
+
+	uint8_t tecla; 
+	UartReadByte(UART_PC, &tecla);
+
+	if(toupper(tecla) == 'O')
+	{
+		CambiarEstado(); 
+		UartSendString(UART_PC, "Medir/Detener\n");
+	}else if(toupper(tecla) == 'H'){
+		GuardarMedicion(); 
+		UartSendString(UART_PC, "Hold\n");
+
+	}else UartSendString(UART_PC, "caracter no valido\n");
+
 }
 
 static void TareaMostrar(void *pvParameter)
@@ -176,14 +196,14 @@ void UartTask(void* param) {
 void app_main(void)
 {
 
-	LedsInit();
-	HcSr04Init(GPIO_3, GPIO_2);
-	SwitchesInit(); 
-	SwitchActivInt(SWITCH_1, CambiarEstado, NULL); 
-	SwitchActivInt(SWITCH_2, GuardarMedicion, NULL); 
-	LcdItsE0803Init(); 
+	LedsInit(); //inicializa los leds
+	HcSr04Init(GPIO_3, GPIO_2); //inicializa el medidior de ultrasonido
+	SwitchesInit(); //inicializa los switches
+	SwitchActivInt(SWITCH_1, CambiarEstado, NULL); //interrupción switch 1
+	SwitchActivInt(SWITCH_2, GuardarMedicion, NULL); //interrupción switch 2
+	LcdItsE0803Init();  //inicializa el display
 
-timer_config_t timer_Tareas = {
+timer_config_t timer_Tareas = { //configuración del timer
         .timer = TIMER_A,
         .period = DELAY_TAREA,
         .func_p = FuncTimerTareas,
@@ -191,17 +211,17 @@ timer_config_t timer_Tareas = {
     };
     TimerInit(&timer_Tareas);
 
-serial_config_t my_uart = {
+serial_config_t my_uart = { //configuración de la uart
 		.port = UART_PC,
 		.baud_rate = 9600,
-		.func_p = NULL,
+		.func_p = LeerTeclado, //función que se activa cuando hay una interrupción 
 		.param_p = NULL
 		}; 
 		UartInit(&my_uart); 
     
-	xTaskCreate(&TareaMedir, "Medir", 512, NULL, 5, &medir_task_handle);
-	xTaskCreate(&TareaMostrar, "Mostrar", 512, NULL, 5, &mostrar_task_handle);
-	xTaskCreate(&UartTask, "UART", 512, &my_uart, 5, &uart_task_handle);
+	xTaskCreate(&TareaMedir, "Medir", 512, NULL, 5, &medir_task_handle); //tarea que se encarga de medir
+	xTaskCreate(&TareaMostrar, "Mostrar", 512, NULL, 5, &mostrar_task_handle); //tarea que se encarga de mostrar la medición 
+	xTaskCreate(&UartTask, "UART", 512, &my_uart, 5, &uart_task_handle); //tarea que se encarga de la comunicación serie
 
 	TimerStart(timer_Tareas.timer); 
 }
