@@ -146,6 +146,7 @@ void app_main(void){
 
 	xTaskCreate(&TareaLeerEnviar, "Leer y Enviar", 512, NULL, 5, &leerEnviar_task_handle);
 	xTaskCreate(&TareaGenerarECG, "Genera un ECG", 512, NULL, 5, &generarECG_task_handle);
+	
 
 
 
