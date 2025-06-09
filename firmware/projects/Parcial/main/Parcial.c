@@ -48,6 +48,11 @@ float humedad;
 float temperatura; 
 uint16_t radiacion; 
 bool ledVerde = true; 
+bool ledAmarillo = false; 
+bool ledRojo = true; 
+char sTemp[4]; 
+char sHum[4]; 
+bool encender = false; 
 
 
 /*==================[internal functions declaration]=========================*/
@@ -62,25 +67,47 @@ void FuncTimerRadiacion(void *param)
 	vTaskNotifyGiveFromISR(radiacion_task_handle, pdFALSE);
 }
 
+void PrenderLeds(){
+	if(ledVerde){
+		LedOn(LED_1); 
+		LedOff(LED_2); 
+		LedOff(LED_3); 
+	}else if (ledAmarillo){
+		LedOn(LED_2); 
+		LedOff(LED_1); 
+		LedOff(LED_3); 
+	}else if (ledRojo){
+		LedOn(LED_3); 
+		LedOff(LED_2); 
+		LedOff(LED_1); 
+	}
+}
+
 static void TareaRiesgo(void *pvParameter){
 	while (true)
 	{
 		ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
-		dht11Read(&humedad, &temperatura); 
+		if(encender){
+			dht11Read(&humedad, &temperatura); 
 
 		if(humedad >= 85 ){
 			if(0<= temperatura && temperatura <= 2){
 
-				LedOn(LED_3); 
+				ledRojo = true;  
+				ledVerde = false; 
+
+				sprintf(sTemp, "%.2f\n", temperatura); //convierte a string los float
+				sprintf(sHum, "%.2f\n", humedad);
 
 				UartSendString(UART_PC, "Temperatura: "); 
-				UartSendString(UART_PC, (char*)UartItoa(temperatura, 10));
+				UartSendString(UART_PC, sTemp);
 				UartSendString(UART_PC, " - Humedad: "); 
-				UartSendString(UART_PC, (char*)UartItoa(humedad, 10));  //no es un int
+				UartSendString(UART_PC, sHum); 
 				UartSendString(UART_PC, " - RIESGO DE NEVADA\n"); 
 			}
 		}else {
-			LedOff(LED_3); 
+			ledRojo = false; 
+			ledVerde = true; 
 			UartSendString(UART_PC, "Temperatura: "); 
 			UartSendString(UART_PC, (char*)UartItoa(temperatura, 10));
 			UartSendString(UART_PC, " - Humedad: "); 
@@ -89,6 +116,8 @@ static void TareaRiesgo(void *pvParameter){
 			
 		}
 
+		PrenderLedVerde(); 
+		}
 		
 	}
 	
@@ -97,7 +126,9 @@ static void TareaRiesgo(void *pvParameter){
 static void TareaRadiacion(void *pvParameter){
 
 	while(true){
-		AnalogInputReadSingle(CH1, radiacion); //radiacion es un valor entre 0 y 3300
+		ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
+		if(encender){
+			AnalogInputReadSingle(CH1, radiacion); //radiacion es un valor entre 0 y 3300
 
 		//convierto a mR/s
 
@@ -106,20 +137,32 @@ static void TareaRadiacion(void *pvParameter){
 		//comparo y envío el mensaje
 
 		if(radiacion < 40){
+			ledVerde = true; 
+			ledAmarillo = false; 
 			UartSendString(UART_PC, "Radiación "); 
 			UartSendString(UART_PC, (char*)UartItoa(radiacion, 10));
 			UartSendString(UART_PC, "\n"); 
 
 		}else{
-
-			LedOn(LED_2); 
+			ledVerde = false; 
+			ledAmarillo = true; 
 			UartSendString(UART_PC, "Radiación "); 
 			UartSendString(UART_PC, (char*)UartItoa(radiacion, 10));
 			UartSendString(UART_PC, "- Radiación elevada\n");
 
 		}
 
+		prenderLeds(); 
+		}
 	}
+}
+
+void EncenderDispositivo(){
+	encender = true; 
+}
+
+void ApagarDispositivo(){
+	encender = false; 
 }
 
 
@@ -163,13 +206,13 @@ void app_main(void){
 	};
 	AnalogInputInit(&Canal_1); 
 
-	// detectar el riesgo de la nevada: 0<= T <= 2 y H > 85. Mandar por uart
+	SwitchesInit();
+	SwitchActivInt(SWITCH_1, EncenderDispositivo, NULL); 
+	SwitchActivInt(SWITCH_2, ApagarDispositivo, NULL);
+
 	xTaskCreate(&TareaRiesgo, "mide y decide si hay riesgo de nevada", 500, NULL, 5, &riesgo_task_handle);
 	xTaskCreate(&TareaRadiacion, "mide y decide si el nivel de radiacion es elevado", 500, NULL, 5, &radiacion_task_handle);
 
-
-
-	//Medicion de la radiación. 
 
 
 	TimerStart(timer_riesgo.timer);
