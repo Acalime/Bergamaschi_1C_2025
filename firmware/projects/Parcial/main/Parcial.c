@@ -57,16 +57,25 @@ bool encender = false;
 
 /*==================[internal functions declaration]=========================*/
 
+/**
+ * @brief función que notifica a la tarea TareaRiesgo
+ */
 void FuncTimerRiesgo(void *param)
 {
 	vTaskNotifyGiveFromISR(riesgo_task_handle, pdFALSE);
 }
 
+/**
+ * @brief función que notifica a la tarea TareaRadiacion
+ */
 void FuncTimerRadiacion(void *param)
 {
 	vTaskNotifyGiveFromISR(radiacion_task_handle, pdFALSE);
 }
 
+/**
+ * @brief función que se encarga de encender o apagar los leds. 
+ */
 void PrenderLeds(){
 	if(ledVerde){
 		LedOn(LED_1); 
@@ -82,6 +91,8 @@ void PrenderLeds(){
 		LedOff(LED_1); 
 	}
 }
+/** @brief Tarea que se encarga de medir la temperatura y la humedad del ambniente y decide si hay 
+ *         riesgo de nevada */
 
 static void TareaRiesgo(void *pvParameter){
 	while (true)
@@ -122,7 +133,10 @@ static void TareaRiesgo(void *pvParameter){
 	}
 	
 }
-
+/**
+ * @brief Tarea que se encarga de tomar el dato de radiación de la entrada analógica y decide 
+ * 		  si hay un nivel demasiado alto de radiación. 
+ */
 static void TareaRadiacion(void *pvParameter){
 
 	while(true){
@@ -174,7 +188,7 @@ void app_main(void){
 	LedsInit(); 
 	
 
-	timer_config_t timer_riesgo = {
+	timer_config_t timer_riesgo = { //configuración del timer para la tarea riesgo
         .timer = TIMER_A,
         .period = PERIODO_RIESGO,
         .func_p = FuncTimerRiesgo,
@@ -182,7 +196,7 @@ void app_main(void){
     };
     TimerInit(&timer_riesgo);
 
-	timer_config_t timer_radiacion = {
+	timer_config_t timer_radiacion = { //configuracion del timer para la tarea radiacion
         .timer = TIMER_A,
         .period = PERIODO_RADIACION,
         .func_p = FuncTimerRadiacion,
