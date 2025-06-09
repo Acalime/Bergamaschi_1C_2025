@@ -10,9 +10,13 @@
  *
  * @section hardConn Hardware Connection
  *
- * |    Peripheral  |   ESP32   	|
- * |:--------------:|:--------------|
- * | 	PIN_X	 	| 	GPIO_X		|
+ * |    Peripheral  				|   ESP32   	|
+ * |:------------------------------:|:--------------|
+ * | 	sensor de radiación 	 	| 	CH1			|
+ * |:------------------------------:|:--------------|
+ * | 	VCC     					|	3V3     	|
+ * | 	DATA temperatura y humedad  | 	GPIO_9  	|
+ * | 	GND		 					| 	GND 		|
  *
  *
  * @section changelog Changelog
@@ -47,9 +51,9 @@ TaskHandle_t radiacion_task_handle = NULL;
 float humedad; 
 float temperatura; 
 uint16_t radiacion; 
-bool ledVerde = true; 
+bool ledVerde = false; 
 bool ledAmarillo = false; 
-bool ledRojo = true; 
+bool ledRojo = false; 
 char sTemp[4]; 
 char sHum[4]; 
 bool encender = false; 
@@ -112,22 +116,22 @@ static void TareaRiesgo(void *pvParameter){
 
 				UartSendString(UART_PC, "Temperatura: "); 
 				UartSendString(UART_PC, sTemp);
-				UartSendString(UART_PC, " - Humedad: "); 
+				UartSendString(UART_PC, " °C- Humedad: "); 
 				UartSendString(UART_PC, sHum); 
-				UartSendString(UART_PC, " - RIESGO DE NEVADA\n"); 
+				UartSendString(UART_PC, "- RIESGO DE NEVADA\n"); 
 			}
 		}else {
 			ledRojo = false; 
 			ledVerde = true; 
 			UartSendString(UART_PC, "Temperatura: "); 
 			UartSendString(UART_PC, (char*)UartItoa(temperatura, 10));
-			UartSendString(UART_PC, " - Humedad: "); 
+			UartSendString(UART_PC, " °C- Humedad: "); 
 			UartSendString(UART_PC, (char*)UartItoa(humedad, 10));
 			UartSendString(UART_PC, "\n");
 			
 		}
 
-		PrenderLedVerde(); 
+		PrenderLeds(); 
 		}
 		
 	}
@@ -144,7 +148,7 @@ static void TareaRadiacion(void *pvParameter){
 		if(encender){
 			AnalogInputReadSingle(CH1, radiacion); //radiacion es un valor entre 0 y 3300
 
-		//convierto a mR/s
+		//convierto a mR/h
 
 		radiacion = (radiacion*100)/3300; 
 
@@ -155,14 +159,14 @@ static void TareaRadiacion(void *pvParameter){
 			ledAmarillo = false; 
 			UartSendString(UART_PC, "Radiación "); 
 			UartSendString(UART_PC, (char*)UartItoa(radiacion, 10));
-			UartSendString(UART_PC, "\n"); 
+			UartSendString(UART_PC, "mR/h\n"); 
 
 		}else{
 			ledVerde = false; 
 			ledAmarillo = true; 
 			UartSendString(UART_PC, "Radiación "); 
 			UartSendString(UART_PC, (char*)UartItoa(radiacion, 10));
-			UartSendString(UART_PC, "- Radiación elevada\n");
+			UartSendString(UART_PC, " mR/h- Radiación elevada\n");
 
 		}
 
