@@ -51,7 +51,8 @@ TaskHandle_t radiacion_task_handle = NULL;
 float humedad; 
 float temperatura; 
 uint16_t radiacion; 
-bool ledVerde = false; 
+bool ledVerdeT = false;
+bool ledVerdeR = false;  
 bool ledAmarillo = false; 
 bool ledRojo = false; 
 char sTemp[4]; 
@@ -81,7 +82,7 @@ void FuncTimerRadiacion(void *param)
  * @brief función que se encarga de encender o apagar los leds. 
  */
 void PrenderLeds(){
-	if(ledVerde){
+	if(ledVerdeT && ledVerdeR){
 		LedOn(LED_1); 
 		LedOff(LED_2); 
 		LedOff(LED_3); 
@@ -109,7 +110,7 @@ static void TareaRiesgo(void *pvParameter){
 			if(0<= temperatura && temperatura <= 2){
 
 				ledRojo = true;  
-				ledVerde = false; 
+				ledVerdeT = false; 
 
 				sprintf(sTemp, "%.2f\n", temperatura); //convierte a string los float
 				sprintf(sHum, "%.2f\n", humedad);
@@ -122,7 +123,7 @@ static void TareaRiesgo(void *pvParameter){
 			}
 		}else {
 			ledRojo = false; 
-			ledVerde = true; 
+			ledVerdeT = true; 
 			UartSendString(UART_PC, "Temperatura: "); 
 			UartSendString(UART_PC, (char*)UartItoa(temperatura, 10));
 			UartSendString(UART_PC, " °C- Humedad: "); 
@@ -155,14 +156,14 @@ static void TareaRadiacion(void *pvParameter){
 		//comparo y envío el mensaje
 
 		if(radiacion < 40){
-			ledVerde = true; 
+			ledVerdeR = true; 
 			ledAmarillo = false; 
 			UartSendString(UART_PC, "Radiación "); 
 			UartSendString(UART_PC, (char*)UartItoa(radiacion, 10));
 			UartSendString(UART_PC, "mR/h\n"); 
 
 		}else{
-			ledVerde = false; 
+			ledVerdeR = false; 
 			ledAmarillo = true; 
 			UartSendString(UART_PC, "Radiación "); 
 			UartSendString(UART_PC, (char*)UartItoa(radiacion, 10));
