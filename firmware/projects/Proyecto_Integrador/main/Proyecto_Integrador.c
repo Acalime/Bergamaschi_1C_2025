@@ -35,10 +35,11 @@
  * | 23/05/2025 | Creación de la tarea mostrar                   |
  * |:----------:|:-----------------------------------------------|
  * | 23/05/2025 | función prender leds        			         |
+ * |:----------:|:-----------------------------------------------|
+ * | 17/06/2025 | Se realiza el doxygen        			         |
  *
  *
- *
- * @author Albano Peñalva (albano.penalva@uner.edu.ar)
+ * @author Micaela Bergamaschi (micaela.bergamaschi@ingenieria.uner.edu.ar)
  *
  */
 
@@ -54,7 +55,7 @@
 #include "switch.h"
 
 /*==================[macros and definitions]=================================*/
-#define PERIODO_MUESTREO 12.5 * 10000 // 80Hz
+#define PERIODO_MUESTREO 12.5 * 10000 // 8Hz
 
 /*==================[internal data definition]===============================*/
 
@@ -68,12 +69,19 @@ bool medicionTemporal = false;
 int auxContador = 0;
 
 /*==================[internal functions declaration]=========================*/
+/**
+ * @brief notifica a la tarea que debe ejecutarse
+ */
 void FuncTimerTareas(void *param)
 {
 	vTaskNotifyGiveFromISR(medir_task_handle, pdFALSE);
 	vTaskNotifyGiveFromISR(temporal_task_handle, pdFAIL);
 }
 
+
+/**
+ * @brief prende los leds de acuerdo al valor medido. 
+ */
 void prenderLeds()
 {
 
@@ -109,17 +117,36 @@ void prenderLeds()
 	}
 }
 
+/**
+ * @brief activa o desactiva el modo medición continua
+ * 
+ * El modo medidión continua toma mediciones periódicas de la fuerza que se ejerce sobre el 
+ * dispositivo pero no permite medir el tiempo que se mantiene presionado el dinamómetro. 
+ */
+
 void ModoMedicionContinua()
 {
 
 	medicionContinua = !medicionContinua;
 }
+/**
+ * @brief activa el modo medición temporal.
+ * 
+ * El modo medición temporal permite medir el tiempo que se sostiene la fuerza.
+ *  
+ */
 
 void ModoMedicionTemporal()
 {
 	medicionTemporal = true;
 }
 
+
+/**
+ * @brief realiza una medición y la envía por UART
+ * 
+ * Es una tarea que toma una medición del HX711 y la envía mediante UART a la PC.
+ */
 static void TareaMedir(void *pvParameter)
 {
 	while (true)
@@ -138,7 +165,12 @@ static void TareaMedir(void *pvParameter)
 		}
 	}
 }
-
+/**
+ * @brief Calcula el tiempo que se mantiene la fuerza sobre el dinamómetro y la informa. 
+ * 
+ * Toma una medición enviada por HX711, evalúa si se se está sosteniendo la fuerza e informa el valor medido. 
+ * Cuando ya no se sostiene la fuerza, informa el tiempo sostenido en segundos. 
+ */
 static void TareaTemporal(void *pvParameter)
 {
 	float umbral = 2;
@@ -219,10 +251,7 @@ void app_main(void)
 							   .func_p = NULL, // función que se activa cuando hay una interrupción
 							   .param_p = NULL};
 	UartInit(&my_uart);
-	// creo que acá tengo que configurar la medición
-
-	// puedo hacer un umbral a partil del cual grafique la fuerza
-
+	
 	xTaskCreate(&TareaMedir, "toma la medición y la procesa", 4096, NULL, 5, &medir_task_handle);
 	xTaskCreate(&TareaTemporal, "mide e informa el tiempo que se sostuvo", 4096, NULL, 5, &temporal_task_handle);
 
