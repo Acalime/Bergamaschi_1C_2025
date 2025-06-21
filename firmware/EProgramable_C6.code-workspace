@@ -50,6 +50,9 @@
         },
         {
             "path": "projects/Parcial"
+        },
+        {
+            "path": "projects/integradorJuli"
         }
     ],
     "settings": {
